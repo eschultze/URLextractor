@@ -2,5 +2,4 @@ curl
 whois
 libxml2-utils
 bc
-tee
 dnsutils
