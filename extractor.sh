@@ -55,7 +55,7 @@ if [[ $INTERNAL != "NO" ]]; then
                 fi
         done
 
-        EXTERNAL_IP_CN=$(echo $GEOIP | cut -d',' -f3 | cut -d '"' -f2) && echo [*] Contry: $EXTERNAL_IP_CN
+        EXTERNAL_IP_CN=$(echo $GEOIP | cut -d',' -f3 | cut -d '"' -f2) && echo [*] Country: $EXTERNAL_IP_CN
         EXTERNAL_IP_RG=$(echo $GEOIP | cut -d',' -f4 | cut -d '"' -f2) && echo [*] RegionCode: $EXTERNAL_IP_RG
         EXTERNAL_IP_RN=$(echo $GEOIP | cut -d',' -f5 | cut -d '"' -f2) && echo [*] RegionName: $EXTERNAL_IP_RN
         EXTERNAL_IP_CITY=$(echo $GEOIP | cut -d',' -f6 | cut -d '"' -f2) && echo [*] City: $EXTERNAL_IP_CITY
@@ -124,7 +124,7 @@ else
 
         TARGET_SERVER=$(curl -A $CURL_UA -I -L --silent http://$TARGET_HOST/ | grep Server: | awk '{print $2;}' | awk 'NR==1') && echo [*] TARGET SERVER: $TARGET_SERVER
         TARGET_IP_CC=$(echo $GEOIP | cut -d',' -f2 | cut -d '"' -f2) && echo [*] CC: $TARGET_IP_CC
-        TARGET_IP_CN=$(echo $GEOIP | cut -d',' -f3 | cut -d '"' -f2) && echo [*] Contry: $TARGET_IP_CN
+        TARGET_IP_CN=$(echo $GEOIP | cut -d',' -f3 | cut -d '"' -f2) && echo [*] Country: $TARGET_IP_CN
         TARGET_IP_RG=$(echo $GEOIP | cut -d',' -f4 | cut -d '"' -f2) && echo [*] RegionCode: $TARGET_IP_RG
         TARGET_IP_RN=$(echo $GEOIP | cut -d',' -f5 | cut -d '"' -f2) && echo [*] RegionName: $TARGET_IP_RN
         TARGET_IP_CITY=$(echo $GEOIP | cut -d',' -f6 | cut -d '"' -f2) && echo [*] City: $TARGET_IP_CITY
