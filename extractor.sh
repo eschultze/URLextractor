@@ -151,7 +151,7 @@ else
         TARGET_PATH=$(echo $TARGET | cut -d'/' -f4-20)
         FOLDER_COUNT=$(echo $TARGET_PATH | tr "/" " " | wc -w)
         if [[ $FOLDER_COUNT -ge 2 ]]; then
-                echo -e "[INFO] Satus code \t Folders "
+                echo -e "[INFO] Status code \t Folders "
                 for (( dir = 1; dir < $FOLDER_COUNT; dir++ )); do
                         TEMP_PATH=`echo $TARGET_PATH | cut -d '/' -f1-$dir`
                         TEMP_HTTP_CODE=`curl -A $CURL_UA -L --write-out "%{http_code}\n" --silent --connect-timeout $CURL_TIMEOUT --output /dev/null "http://$TARGET_HOST/$TEMP_PATH"`
