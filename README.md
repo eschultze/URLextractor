@@ -24,9 +24,9 @@ Information gathering & website reconnaissance
 * Option to open ALL results in browser at the end
 
 **Requirements:**
-Tested on Kali light mini
+Tested on Kali light mini AND OSX 10.11.3 with brew
 ```
-sudo apt-get install bc curl dnsutils libxml2-utils whois -y
+sudo apt-get install bc curl dnsutils libxml2-utils whois md5sha1sum -y
 ```
 
 **Configuration file:**
@@ -47,3 +47,6 @@ OPEN_EXTERNAL_LINKS=NO #open external links (frames) at the end of script
 * [ ] Use GNU parallel to fuzz URLs
 * [ ] Export to CSV
 * [ ] Possible migration to python
+* [ ] Integration with JoomScan/WPScan/CMSmap
+* [ ] Integration with CipherScan
+* [ ] Check for installed packages
