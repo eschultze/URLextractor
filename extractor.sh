@@ -2,7 +2,7 @@
 
 erase_temp_files(){
         echo -e "\n[ALERT] OK... Let's close"
-        rm -f URLs_$TARGET_HOST.txt $TARGET_DOMAIN.xml URLsExternal$TARGET_HOST.txt
+        rm -f *$TARGET_HOST* *$TARGET_DOMAIN*
         exit 130
 }
 
@@ -18,7 +18,7 @@ echo -e "\e[1;32m##################################################"
 echo -e "#                  URLextractor                  #"
 echo -e "# Information Gathering & Website Reconnaissance #"
 echo -e "#              coded by eschultze                #"
-echo -e "#                version - 0.1.8                 #"
+echo -e "#                version - 0.1.9                 #"
 echo -e "##################################################\e[m"
 
 date '+[INFO] Date: %d/%m/%y | Time: %H:%M:%S'
@@ -66,7 +66,7 @@ if [[ $INTERNAL != "NO" ]]; then
         EXTERNAL_IP_ISP=$(echo $WHOIS_IP | cut -d' ' -f15-28) && echo [*] ISP: $EXTERNAL_IP_ISP
 
         echo "[INFO] Possible abuse mails are:"
-        for i in $(curl -L -A $CURL_UA --silent --connect-timeout $CURL_TIMEOUT "https://www.spamcop.net/sc?track=$EXTERNAL_IP" | grep -oE 'mailto:.*' | grep -v bait | cut -d':' -f2 | cut -d'"' -f1) ; do echo [*] $i; done
+        for i in $(lynx -dump -force_html -nolist -accept_all_cookies "https://www.spamcop.net/sc?track=$TARGET_IP" | grep '@' | sed -e 's/^[ \t]*//') ; do echo [*] $i; done
 fi
 
         TARGET_HOST=$(echo $TARGET | cut -d'/' -f3 | cut -d':' -f1)
@@ -117,12 +117,12 @@ else
                         echo [*] $TARGET_LOADB_IP
                 done
         else
-                echo [INFO] NO load balancer detected at $TARGET_HOST...
+                echo "[INFO] NO load balancer detected for $TARGET_HOST..."
         fi
 
         TARGET_DNS=$(dig -t SOA $TARGET_HOST | grep -A1 "AUTHORITY SECTION\|ANSWER SECTION" | awk '{print$5}' | sed '/^$/d') && echo [*] DNS servers: ${TARGET_DNS[@]}
 
-        TARGET_SERVER=$(curl -A $CURL_UA -I -L --silent http://$TARGET_HOST/ | grep Server: | awk '{print $2;}' | awk 'NR==1') && echo [*] TARGET SERVER: $TARGET_SERVER
+        TARGET_SERVER=$(curl -A $CURL_UA -I -L --silent http://$TARGET_HOST/ | grep Server: | uniq | cut -d' ' -f2-10) && echo [*] TARGET server: $TARGET_SERVER
         TARGET_IP_CC=$(echo $GEOIP | cut -d',' -f2 | cut -d '"' -f2) && echo [*] CC: $TARGET_IP_CC
         TARGET_IP_CN=$(echo $GEOIP | cut -d',' -f3 | cut -d '"' -f2) && echo [*] Country: $TARGET_IP_CN
         TARGET_IP_RG=$(echo $GEOIP | cut -d',' -f4 | cut -d '"' -f2) && echo [*] RegionCode: $TARGET_IP_RG
@@ -151,6 +151,7 @@ else
         TARGET_PATH=$(echo $TARGET | cut -d'/' -f4-20)
         FOLDER_COUNT=$(echo $TARGET_PATH | tr "/" " " | wc -w)
         if [[ $FOLDER_COUNT -ge 2 ]]; then
+                echo "[INFO] Checking for HTTP status codes recursively from /$TARGET_PATH"
                 echo -e "[INFO] Status code \t Folders "
                 for (( dir = 1; dir < $FOLDER_COUNT; dir++ )); do
                         TEMP_PATH=`echo $TARGET_PATH | cut -d '/' -f1-$dir`
@@ -163,15 +164,28 @@ else
         ROBOTS=$(curl -A $CURL_UA -L --write-out "%{http_code}\n" --silent --connect-timeout $CURL_TIMEOUT --output /dev/null "http://$TARGET_HOST/robots.txt")
         if [[ $ROBOTS = 200 ]]; then
                 echo "[ALERT] robots.txt file FOUND in http://$TARGET_HOST/robots.txt"
+                echo "[INFO] Checking for HTTP status codes recursively from http://$TARGET_HOST/robots.txt"
+                echo -e "[INFO] Status code \t Folders "
                 for TEMP_ROBOTS in $(curl -A $CURL_UA -L --silent --connect-timeout $CURL_TIMEOUT "http://$TARGET_HOST/robots.txt" | grep -oE "^(All.*|Dis.*).*" | cut -d' ' -f2) 
                 do
                         ROBOTS_CODE=`curl -L -A $CURL_UA --write-out "%{http_code}\n" --silent --connect-timeout $CURL_TIMEOUT --output /dev/null "http://$TARGET_HOST$TEMP_ROBOTS"`
                         if [[ $ROBOTS_CODE =~ ^2 ]] || [[ $ROBOTS_CODE =~ ^3 ]]; then
-                                echo "[*] $ROBOTS_CODE - http://$TARGET_HOST$TEMP_ROBOTS"
+                                echo -e "[*] \t $ROBOTS_CODE \t\t http://$TARGET_HOST$TEMP_ROBOTS"
                                 echo http://$TARGET_HOST$TEMP_ROBOTS >> URLs_$TARGET_HOST.txt
                         fi
                 done
         fi
+
+        echo "[INFO] Starting FUZZing in http://$TARGET_HOST/FUzZzZzZzZz..."
+        echo -e "[INFO] Status code \t Folders "
+        cat fuzz | head -$FUZZ_LIMIT | while read DIR
+        do
+                FUZZ_CODE=`curl -L -A $CURL_UA --write-out "%{http_code}\n" --silent --connect-timeout $CURL_TIMEOUT --output /dev/null "http://$TARGET_HOST/$DIR"`
+                if [[ $FUZZ_CODE =~ ^2 ]] || [[ $FUZZ_CODE =~ ^3 ]]; then
+                        echo -e "[*] \t $FUZZ_CODE \t\t http://$TARGET_HOST/$DIR"
+                        echo http://$TARGET_HOST/$DIR >> URLs_$TARGET_HOST.txt
+                fi
+        done
 
         PASS1=$(curl -A $CURL_UA -L --silent --connect-timeout $CURL_TIMEOUT $TARGET | grep -i 'user\|pass\|root\|admin')
         PASS2=$(curl -A $CURL_UA -L --silent --connect-timeout $CURL_TIMEOUT http://$TARGET_HOST/ | grep -i 'user\|pass\|root\|admin')
@@ -203,33 +217,27 @@ else
 
                         URL_ARRAY=($TARGET http://$TARGET_HOST/ http://$TARGET_IP/)
                 fi
-        else
-                MD3=$(curl -A $CURL_UA -L --silent --connect-timeout $CURL_TIMEOUT "http://$TARGET_IP/" | md5sum | cut -d' ' -f1)        
-                if [[ $MD1 = $MD3 ]]; then
-                        echo "[INFO] SAME content in http://$TARGET_HOST/ AND http://$TARGET_IP/"
-                        URL_ARRAY=($TARGET)
-                else
-                        URL_ARRAY=($TARGET http://$TARGET_IP/)
-                fi
         fi
-        
+
+        MD3=$(curl -A $CURL_UA -L --silent --connect-timeout $CURL_TIMEOUT "http://$TARGET_IP/" | md5sum | cut -d' ' -f1)        
+        if [[ $MD1 = $MD3 ]]; then
+                echo "[INFO] SAME content in http://$TARGET_HOST/ AND http://$TARGET_IP/"
+                URL_ARRAY=($TARGET)
+        else
+                URL_ARRAY=($TARGET http://$TARGET_IP/)
+        fi
+
         for TEMP_ARRAY in $(echo ${URL_ARRAY[*]})
         do
-                echo [INFO] External links from $TEMP_ARRAY: && for TEMP_LINK in $(curl -A $CURL_UA -L --silent --connect-timeout $CURL_TIMEOUT $TEMP_ARRAY | grep -o '<a href=['"'"'"][^"'"'"']*['"'"'"]' | sed -e 's/^<a href=["'"'"']//' -e 's/["'"'"']$//' | grep -E ^http | sort | uniq)
+                TEMP_LINK=`lynx -dump -force_html -listonly -nonumbers -accept_all_cookies -width=160 "$TEMP_ARRAY" | grep "^http\|^ftp\|^irc" | sort | uniq >> URLsExternal$TARGET_HOST.txt`
+        done
+        echo "[INFO] Links found from ${URL_ARRAY[*]}:"
+        if [[ -s URLsExternal$TARGET_HOST.txt ]]; then
+                cat URLsExternal$TARGET_HOST.txt | sort | uniq | while read LINKS
                 do
-                        echo [*] $TEMP_LINK | grep -v $TARGET_HOST | tee -a URLsExternal$TARGET_HOST.txt
+                        echo [*] $LINKS
                 done
-        done
-
-        echo "[INFO] Starting FUZZing in http://$TARGET_HOST/FUzZzZzZzZz..."
-        cat fuzz | head -$FUZZ_LIMIT | while read DIR
-        do
-                FUZZ_CODE=`curl -L -A $CURL_UA --write-out "%{http_code}\n" --silent --connect-timeout $CURL_TIMEOUT --output /dev/null "http://$TARGET_HOST/$DIR"`
-                if [[ $FUZZ_CODE =~ ^2 ]] || [[ $FUZZ_CODE =~ ^3 ]]; then
-                        echo "[*] $FUZZ_CODE - http://$TARGET_HOST/$DIR"
-                        echo http://$TARGET_HOST/$DIR >> URLs_$TARGET_HOST.txt
-                fi
-        done
+        fi
 
         HOST_COUNT=$(echo $TARGET_HOST | tr "." " " | wc -w)
         if [[ $HOST_COUNT -ge 3 ]]; then
@@ -255,30 +263,6 @@ else
                         fi
                 done
         fi
-
-
-        echo [INFO] Useful links related to $TARGET_HOST - $TARGET_IP:
-        echo "[*] https://www.virustotal.com/pt/ip-address/$TARGET_IP/information/" | tee -a URLs_$TARGET_HOST.txt
-        echo "[*] https://www.hybrid-analysis.com/search?host=$TARGET_IP" | tee -a URLs_$TARGET_HOST.txt
-        echo "[*] https://www.shodan.io/host/$TARGET_IP" | tee -a URLs_$TARGET_HOST.txt
-        echo "[*] https://www.senderbase.org/lookup/?search_string=$TARGET_IP" | tee -a URLs_$TARGET_HOST.txt
-        echo "[*] https://www.alienvault.com/open-threat-exchange/ip/$TARGET_IP" | tee -a URLs_$TARGET_HOST.txt
-        echo "[*] http://pastebin.com/search?q=$TARGET_IP" | tee -a URLs_$TARGET_HOST.txt
-        echo "[*] http://urlquery.net/search.php?q=$TARGET_IP" | tee -a URLs_$TARGET_HOST.txt
-        echo "[*] http://www.alexa.com/siteinfo/$TARGET_HOST" | tee -a URLs_$TARGET_HOST.txt
-        echo "[*] http://www.google.com/safebrowsing/diagnostic?site=$TARGET_HOST" | tee -a URLs_$TARGET_HOST.txt
-        echo "[*] https://censys.io/ipv4/$TARGET_IP" | tee -a URLs_$TARGET_HOST.txt
-
-        if [[ $TARGET_IP_ASN != "" ]]; then
-                echo [INFO] Useful links related to $TARGET_IP_ASN - $TARGET_IP_BGP:
-                TARGET_IP_ASN_TEMP=$(echo $TARGET_IP_ASN | cut -c3-12)
-                echo "[*] http://www.google.com/safebrowsing/diagnostic?site=AS:$TARGET_IP_ASN_TEMP" | tee -a URLs_$TARGET_HOST.txt
-                echo "[*] https://www.senderbase.org/lookup/?search_string=$TARGET_IP_BGP" | tee -a URLs_$TARGET_HOST.txt
-                echo "[*] http://bgp.he.net/$TARGET_IP_ASN" | tee -a URLs_$TARGET_HOST.txt
-                echo "[*] https://stat.ripe.net/$TARGET_IP_ASN" | tee -a URLs_$TARGET_HOST.txt
-        fi
-
-
 
         if [[ $OPEN_TARGET_URLS != "NO" ]]; then
                 COUNT=1
@@ -311,7 +295,92 @@ else
                 done
         fi
 
-        rm -f URLs_$TARGET_HOST.txt $TARGET_DOMAIN.xml URLsExternal$TARGET_HOST.txt
+        LYNX_GOOGLE_COUNT=`lynx -dump -force_html -nolist -accept_all_cookies -width=160 "http://google.com/search?q=$TARGET_HOST" | grep "result" | wc -w`
+        LYNX_GOOGLE_COUNT_TEMP=`echo $LYNX_GOOGLE_COUNT -3 | bc`
+
+        LYNX_GOOGLE=$(lynx -dump -force_html -nolist -accept_all_cookies -width=160 "http://google.com/search?q=$TARGET_HOST" | grep "result" | sed -e 's/^[ \t]*//' | cut -d' ' -f$LYNX_GOOGLE_COUNT_TEMP-$LYNX_GOOGLE_COUNT)
+        if [[ $LYNX_GOOGLE != "" ]]; then
+                echo [INFO] GOOGLE has $LYNX_GOOGLE about http://$TARGET_HOST/
+        fi
+
+        LYNX_BING_IP=$(lynx -dump -force_html -nolist -accept_all_cookies -width=160 "http://www.bing.com/search?q=ip%3A$TARGET_IP" | grep "resultsDate" | awk '{print$1}')
+        if [[ $LYNX_BING_IP != "" ]]; then
+                echo [INFO] BING shows $TARGET_IP is shared with $LYNX_BING_IP hosts/vhosts
+        fi
+
+        echo [INFO] Shodan detected the following opened ports on $TARGET_IP:
+        for SHODAN_PROTO in $(lynx -dump -force_html -nolist -accept_all_cookies "https://www.shodan.io/host/$TARGET_IP" | grep '*' | grep -o '[0-9]*' | sort | uniq)
+        do
+                echo [*] $SHODAN_PROTO
+        done
+
+        echo "[INFO] ------VirusTotal SECTION------"
+        echo "[INFO] VirusTotal passive DNS only stores address records. The following domains resolved to the given IP address:"
+        IFS=$'\n' && for VIRUST_DNS in $(lynx -dump -force_html -nolist -accept_all_cookies -width=160 "https://www.virustotal.com/pt/ip-address/$TARGET_IP/information/" | grep -A10 'passive DNS only stores address records' | grep -v '/' | grep -o '20.*' | column -t)
+        do
+                echo [*] $VIRUST_DNS
+        done
+
+        
+        echo "[INFO] Latest URLs hosted in this IP address detected by at least one URL scanner or malicious URL dataset:"
+        IFS=$'\n' && for VIRUST_URLS_D in $(lynx -dump -force_html -nolist -accept_all_cookies -width=160 "https://www.virustotal.com/pt/ip-address/$TARGET_IP/information/" | grep -A10 'URLs hosted in this IP address' | grep "$TARGET_HOST" | column -t)
+        do
+                echo [*] $VIRUST_URLS_D
+        done
+
+        echo "[INFO] Latest files that are not detected by any antivirus solution and were downloaded by VirusTotal from the IP address provided:"
+        IFS=$'\n' && for VIRUST_URLS_N in $(lynx -dump -force_html -nolist -accept_all_cookies -width=160 "https://www.virustotal.com/pt/ip-address/$TARGET_IP/information/" | grep -A10 'not detected by any antivirus' | grep '/' | column -t)
+        do
+                echo [*] $VIRUST_URLS_N
+        done
+
+        echo "[INFO] ------Alexa Rank SECTION------"
+        echo "[INFO] Percent of Visitors Rank in Country:"
+        IFS=$'\n' && for ALEXA_COUNTRY in $(lynx -dump -force_html -nolist -accept_all_cookies -width=160 "http://www.alexa.com/siteinfo/$TARGET_HOST" | grep -A5 'Percent of Visitors Rank in Country' | tail -5 | sed -e 's/^[ \t]*//' | sed -n -e 's/^.*Flag //p' | awk '{print$1,$2,$3,$4,$5}')
+        do
+                echo [*] $ALEXA_COUNTRY
+        done
+
+        echo "[INFO] Percent of Search Traffic:"
+        IFS=$'\n' && for ALEXA_SEARCH in $(lynx -dump -force_html -nolist -accept_all_cookies -width=160 "http://www.alexa.com/siteinfo/$TARGET_HOST" | grep -A5 'Percent of Search Traffic' | sed -e 's/^[ \t]*//' | grep -o '[0-9].*\..*' | cut -d' ' -f2-50 | sed -e 's/^[ \t]*//')
+        do
+                echo [*] $ALEXA_SEARCH
+        done
+
+        echo "[INFO] Percent of Unique Visits:"
+        IFS=$'\n' && for ALEXA_VISITS in $(lynx -dump -force_html -nolist -accept_all_cookies -width=160 "http://www.alexa.com/siteinfo/$TARGET_HOST" | grep -A5 'Percent of Unique Visits' | sed -e 's/^[ \t]*//' | grep -o '[0-9].*\..*' | awk '{print$2,$3}' | column -t)
+        do
+                echo [*] $ALEXA_VISITS
+        done
+
+        echo "[INFO] Total Sites Linking In:"
+        IFS=$'\n' && for ALEXA_LINKING in $(lynx -dump -force_html -nolist -accept_all_cookies -width=160 "http://www.alexa.com/siteinfo/$TARGET_HOST" | grep -A9 'Total Sites Linking In' | sed -e 's/^[ \t]*//' | grep -o '[0-9].*\..*' | awk '{print$2,$3}' | head -5 | column -t) 
+        do
+                echo [*] $ALEXA_LINKING
+        done
+
+        echo [INFO] Useful links related to $TARGET_HOST - $TARGET_IP:
+        echo "[*] https://www.virustotal.com/pt/ip-address/$TARGET_IP/information/" | tee -a URLs_$TARGET_HOST.txt
+        echo "[*] https://www.hybrid-analysis.com/search?host=$TARGET_IP" | tee -a URLs_$TARGET_HOST.txt
+        echo "[*] https://www.shodan.io/host/$TARGET_IP" | tee -a URLs_$TARGET_HOST.txt
+        echo "[*] https://www.senderbase.org/lookup/?search_string=$TARGET_IP" | tee -a URLs_$TARGET_HOST.txt
+        echo "[*] https://www.alienvault.com/open-threat-exchange/ip/$TARGET_IP" | tee -a URLs_$TARGET_HOST.txt
+        echo "[*] http://pastebin.com/search?q=$TARGET_IP" | tee -a URLs_$TARGET_HOST.txt
+        echo "[*] http://urlquery.net/search.php?q=$TARGET_IP" | tee -a URLs_$TARGET_HOST.txt
+        echo "[*] http://www.alexa.com/siteinfo/$TARGET_HOST" | tee -a URLs_$TARGET_HOST.txt
+        echo "[*] http://www.google.com/safebrowsing/diagnostic?site=$TARGET_HOST" | tee -a URLs_$TARGET_HOST.txt
+        echo "[*] https://censys.io/ipv4/$TARGET_IP" | tee -a URLs_$TARGET_HOST.txt
+
+        if [[ $TARGET_IP_ASN != "" ]]; then
+                echo [INFO] Useful links related to $TARGET_IP_ASN - $TARGET_IP_BGP:
+                TARGET_IP_ASN_TEMP=$(echo $TARGET_IP_ASN | cut -c3-12)
+                echo "[*] http://www.google.com/safebrowsing/diagnostic?site=AS:$TARGET_IP_ASN_TEMP" | tee -a URLs_$TARGET_HOST.txt
+                echo "[*] https://www.senderbase.org/lookup/?search_string=$TARGET_IP_BGP" | tee -a URLs_$TARGET_HOST.txt
+                echo "[*] http://bgp.he.net/$TARGET_IP_ASN" | tee -a URLs_$TARGET_HOST.txt
+                echo "[*] https://stat.ripe.net/$TARGET_IP_ASN" | tee -a URLs_$TARGET_HOST.txt
+        fi
+
+        rm -f *$TARGET_HOST* *$TARGET_DOMAIN*
 
         date '+[INFO] Date: %d/%m/%y | Time: %H:%M:%S'
         date_end=$(date +"%s")
