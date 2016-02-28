@@ -2,8 +2,12 @@
 
 Information gathering & website reconnaissance
 
+------
+
 **Usage:**
 `./extractor http://www.hackthissite.org/`
+
+------
 
 ![](https://github.com/eschultze/URLextractor/blob/master/examples/example1.png)
 
@@ -23,11 +27,29 @@ Information gathering & website reconnaissance
 * Provides useful links at other websites to correlate with IP/ASN
 * Option to open ALL results in browser at the end
 
+------
+
+**Changelog to version 0.1.9:**
+* Abuse mail using lynx istead of ~~curl~~
+* Target server name parsing fixed
+* More verbose about HTTP codes and directory discovery
+* MD5 collection for IP fixed
+* Links found now show unique URLs from array
+* [New feature] **Google** results
+* [New feature] **Bing** IP check for other hosts/vhosts
+* [New feature] Opened ports from **Shodan**
+* [New feature] **VirusTotal** information about IP
+* [New feature] **Alexa Rank** information about $TARGET_HOST
+
+------
+
 **Requirements:**
 Tested on Kali light mini AND OSX 10.11.3 with brew
 ```
-sudo apt-get install bc curl dnsutils libxml2-utils whois md5sha1sum -y
+sudo apt-get install bc curl dnsutils libxml2-utils whois md5sha1sum lynx -y
 ```
+
+------
 
 **Configuration file:**
 ```
@@ -39,6 +61,8 @@ FUZZ_LIMIT=10 #how many lines it will read from fuzz file
 OPEN_TARGET_URLS=NO #open found URLs at the end of script
 OPEN_EXTERNAL_LINKS=NO #open external links (frames) at the end of script
 ```
+
+------
 
 **Todo list:**
 * [x] Upload to github :)
