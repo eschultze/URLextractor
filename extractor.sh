@@ -109,7 +109,7 @@ else
                 fi
         fi
 
-        TARGET_LOADB=$(host $TARGET_HOST | grep "has address" | wc -l)
+        TARGET_LOADB=$(host $TARGET_HOST | grep "has address" | wc -l | sed -e 's/^[ \t]*//')
         if [[ $TARGET_LOADB -ge 2 ]]; then
                 echo "[ALERT] $TARGET_HOST has a load balancer for IPv4 with the following IPs:"
                 for TARGET_LOADB_IP in $(host $TARGET_HOST | grep "has address" | cut -d' ' -f4)
@@ -149,7 +149,7 @@ else
         fi
 
         TARGET_PATH=$(echo $TARGET | cut -d'/' -f4-20)
-        FOLDER_COUNT=$(echo $TARGET_PATH | tr "/" " " | wc -w)
+        FOLDER_COUNT=$(echo $TARGET_PATH | tr "/" " " | wc -w | sed -e 's/^[ \t]*//')
         if [[ $FOLDER_COUNT -ge 2 ]]; then
                 echo "[INFO] Checking for HTTP status codes recursively from /$TARGET_PATH"
                 echo -e "[INFO] Status code \t Folders "
@@ -239,7 +239,7 @@ else
                 done
         fi
 
-        HOST_COUNT=$(echo $TARGET_HOST | tr "." " " | wc -w)
+        HOST_COUNT=$(echo $TARGET_HOST | tr "." " " | wc -w | sed -e 's/^[ \t]*//')
         if [[ $HOST_COUNT -ge 3 ]]; then
                 CUT_TEMP=$(echo $HOST_COUNT -1 | bc)
                 TARGET_DOMAIN=$(echo $TARGET_HOST | cut -d'.' -f$CUT_TEMP-$HOST_COUNT)
@@ -295,7 +295,7 @@ else
                 done
         fi
 
-        LYNX_GOOGLE_COUNT=`lynx -dump -force_html -nolist -accept_all_cookies -width=160 "http://google.com/search?q=$TARGET_HOST" | grep "result" | wc -w`
+        LYNX_GOOGLE_COUNT=`lynx -dump -force_html -nolist -accept_all_cookies -width=160 "http://google.com/search?q=$TARGET_HOST" | grep "result" | wc -w | sed -e 's/^[ \t]*//'`
         LYNX_GOOGLE_COUNT_TEMP=`echo $LYNX_GOOGLE_COUNT -3 | bc`
 
         LYNX_GOOGLE=$(lynx -dump -force_html -nolist -accept_all_cookies -width=160 "http://google.com/search?q=$TARGET_HOST" | grep "result" | sed -e 's/^[ \t]*//' | cut -d' ' -f$LYNX_GOOGLE_COUNT_TEMP-$LYNX_GOOGLE_COUNT)
