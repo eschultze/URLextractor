@@ -2,7 +2,7 @@
 
 erase_temp_files(){
         echo -e "\n[ALERT] OK... Let's close"
-        rm -f *$TARGET_HOST* *$TARGET_DOMAIN*
+        rm -f URLs_$TARGET_HOST.txt $TARGET_DOMAIN.xml URLsExternal$TARGET_HOST.txt
         exit 130
 }
 
@@ -380,7 +380,7 @@ else
                 echo "[*] https://stat.ripe.net/$TARGET_IP_ASN" | tee -a URLs_$TARGET_HOST.txt
         fi
 
-        rm -f *$TARGET_HOST* *$TARGET_DOMAIN*
+        rm -f URLs_$TARGET_HOST.txt $TARGET_DOMAIN.xml URLsExternal$TARGET_HOST.txt
 
         date '+[INFO] Date: %d/%m/%y | Time: %H:%M:%S'
         date_end=$(date +"%s")
