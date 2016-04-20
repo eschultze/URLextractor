@@ -37,7 +37,7 @@ if [[ $INTERNAL != "NO" ]]; then
         echo [*] Internal IP: $internal
 
         EXTERNAL_IP=$(curl -A $CURL_UA --silent --connect-timeout $CURL_TIMEOUT http://ipinfo.io/ip)
-        GEOIP=$(curl -A $CURL_UA --silent --connect-timeout $CURL_TIMEOUT http://freegeoip.net/csv/$EXTERNAL_IP) echo [*] External IP: $EXTERNAL_IP
+        GEOIP=$(curl -A $CURL_UA --silent --connect-timeout $CURL_TIMEOUT http://freegeoip.io/csv/$EXTERNAL_IP) echo [*] External IP: $EXTERNAL_IP
         EXTERNAL_IP_CC=$(echo $GEOIP | cut -d',' -f2 | cut -d '"' -f2) && echo [*] CC: $EXTERNAL_IP_CC
 
         TRIES=0
@@ -45,7 +45,7 @@ if [[ $INTERNAL != "NO" ]]; then
         while [[ $EXTERNAL_IP_CC = "Try again later" ]] || [[ $EXTERNAL_IP_CC = "" ]]; do
                 echo "[ALERT] Problem with Freegeoip detected... trying to reconnect with $CURL_TIMEOUT seconds timeout. Number of tries: $TRIES/$TRIES_MAX"
                 TRIES=$((TRIES+1))
-                GEOIP=`curl -A $CURL_UA --silent --connect-timeout $CURL_TIMEOUT http://freegeoip.net/csv/$EXTERNAL_IP`
+                GEOIP=`curl -A $CURL_UA --silent --connect-timeout $CURL_TIMEOUT http://freegeoip.io/csv/$EXTERNAL_IP`
                 EXTERNAL_IP_CC=`echo $GEOIP | cut -d',' -f2 | cut -d '"' -f2`
                 echo [*] Number of tries: $TRIES
 
@@ -80,7 +80,7 @@ else
         echo [INFO] ------TARGET info------
         echo [*] TARGET: $TARGET
 
-        GEOIP=$(curl -A $CURL_UA --silent --connect-timeout $CURL_TIMEOUT http://freegeoip.net/csv/$TARGET_HOST)
+        GEOIP=$(curl -A $CURL_UA --silent --connect-timeout $CURL_TIMEOUT http://freegeoip.io/csv/$TARGET_HOST)
         TARGET_IP=$(echo $GEOIP | cut -d',' -f1 | cut -d '"' -f2)
 
         TRIES=0
@@ -88,7 +88,7 @@ else
         while [[ $TARGET_IP = "Try again later" ]] || [[ $TARGET_IP = "" ]]; do
                 TRIES=$((TRIES+1))
                 echo "[ALERT] Problem with Freegeoip detected... trying to reconnect with $CURL_TIMEOUT seconds timeout. Number of tries: $TRIES/$TRIES_MAX"
-                GEOIP=`curl -A $CURL_UA --silent --connect-timeout $CURL_TIMEOUT http://freegeoip.net/csv/$TARGET_HOST`
+                GEOIP=`curl -A $CURL_UA --silent --connect-timeout $CURL_TIMEOUT http://freegeoip.io/csv/$TARGET_HOST`
                 TARGET_IP=`echo $GEOIP | cut -d',' -f1 | cut -d '"' -f2`
 
                 if [[ $TRIES -ge 6 ]]; then
