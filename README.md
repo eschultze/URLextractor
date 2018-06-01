@@ -8,6 +8,10 @@ Information gathering & website reconnaissance
 
 ![](https://github.com/eschultze/URLextractor/blob/master/examples/example1.png)
 
+**Tips:**
+* Colorex: put colors to the ouput `pip install colorex` and use it like `./extractor http://www.hackthissite.org/ | colorex -g "INFO" -r "ALERT"`
+* Tldextract: is used by dnsenumeration function `pip install tldextract`
+
 Features:
 ------
 
@@ -25,6 +29,19 @@ Features:
 * [URLvoid](http://www.urlvoid.com/) API - checks Google page rank, Alexa rank and possible blacklists 
 * Provides useful links at other websites to correlate with IP/ASN
 * Option to open ALL results in browser at the end
+
+Changelog to version 0.2.0:
+------
+
+* [Fix] Changed GeoIP from freegeoip to ip-api
+* [Fix/Improvement] Remove duplicates from robots.txt
+* [Improvement] Better whois abuse contacts (abuse.net)
+* [Improvement] Top passwords collection added to sourcecode checking
+* [New feature] Firt run verification to install dependencies if need
+* [New feature] Log file
+* [New feature] Check for hostname on log file
+* [New feature] Check if hostname is listed on Spamaus Domain Blacklist
+* [New feature] Run a quick dnsenumeration with common server names
 
 Changelog to version 0.1.9:
 ------
@@ -45,7 +62,7 @@ Requirements:
 
 Tested on Kali light mini AND OSX 10.11.3 with brew
 ```
-sudo apt-get install bc curl dnsutils libxml2-utils whois md5sha1sum lynx -y
+sudo apt-get install bc curl dnsutils libxml2-utils whois md5sha1sum lynx openssl -y
 ```
 
 **Configuration file:**
@@ -57,17 +74,14 @@ URLVOID_KEY=your_API_key #using API from http://www.urlvoid.com/
 FUZZ_LIMIT=10 #how many lines it will read from fuzz file
 OPEN_TARGET_URLS=NO #open found URLs at the end of script
 OPEN_EXTERNAL_LINKS=NO #open external links (frames) at the end of script
+FIRST_TIME=YES #if first time check for dependecies
 ```
 
 Todo list:
 ------
 
 * [x] Upload to github :)
+* [x] Check for installed packages
 * [ ] Integration with other APIs
-* [ ] Add  host regex validation
-* [ ] Use GNU parallel to fuzz URLs
 * [ ] Export to CSV
-* [ ] Possible migration to python
-* [ ] Integration with JoomScan/WPScan/CMSmap
 * [ ] Integration with CipherScan
-* [ ] Check for installed packages
