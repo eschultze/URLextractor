@@ -7,3 +7,5 @@ URLVOID_KEY= #using API from http://www.urlvoid.com/
 FUZZ_LIMIT=10 #how many lines it will read from fuzz file
 OPEN_TARGET_URLS=NO #open found URLs at the end of script
 OPEN_EXTERNAL_LINKS=NO #open external links (frames) at the end of script
+FIRST_TIME=YES #if first time check for dependecies
+
