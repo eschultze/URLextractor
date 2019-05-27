@@ -85,3 +85,7 @@ Todo list:
 * [ ] Integration with other APIs
 * [ ] Export to CSV
 * [ ] Integration with CipherScan
+
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/eschultze/URLextractor.svg)](https://starchart.cc/eschultze/URLextractor)
